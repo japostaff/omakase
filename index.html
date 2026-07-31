@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Omakase Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: #1a1818; overflow: hidden; }
+  #stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    transition: transform 0.35s ease;
+  }
+  .slide {
+    flex: 0 0 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1818;
+  }
+  .frame {
+    position: relative;
+    aspect-ratio: 1080 / 1920;
+    max-height: 100%;
+    max-width: 100%;
+    margin: auto;
+  }
+  .frame img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .hotspot {
+    position: absolute;
+    cursor: pointer;
+    z-index: 6;
+  }
+  .tap-zone {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 30%;
+    z-index: 5;
+  }
+  #tap-left { left: 0; }
+  #tap-right { right: 0; }
+  #counter {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    color: #c49b54;
+    font-family: -apple-system, sans-serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    z-index: 10;
+    background: rgba(0,0,0,0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+  #lightbox-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    z-index: 101;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div class="slide"><div class="frame"><img src="slide1.png" draggable="false"></div></div>
+    <div class="slide"><div class="frame"><img src="slide2.png" draggable="false"></div></div>
+    <div class="slide">
+      <div class="frame">
+        <img src="slide3.png" draggable="false">
+        <div class="hotspot" data-full="sushi_img.jpg" style="left:7.41%; top:35.63%; width:36.11%; height:17.71%;"></div>
+        <div class="hotspot" data-full="sashimi_img.jpg" style="left:52.78%; top:35.63%; width:36.11%; height:17.71%;"></div>
+      </div>
+    </div>
+    <div class="slide"><div class="frame"><img src="slide4.png" draggable="false"></div></div>
+    <div class="slide"><div class="frame"><img src="slide5.png" draggable="false"></div></div>
+    <div class="slide"><div class="frame"><img src="slide6.png" draggable="false"></div></div>
+  </div>
+  <div id="counter">1 / 6</div>
+  <div class="tap-zone" id="tap-left"></div>
+  <div class="tap-zone" id="tap-right"></div>
+
+  <div id="lightbox">
+    <img id="lightbox-img" src="" draggable="false">
+  </div>
+  <div id="lightbox-hint">Tap anywhere to close</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const counter = document.getElementById('counter');
+  const total = document.querySelectorAll('.slide').length;
+  let current = 0;
+
+  function render() {
+    stage.style.transform = `translateX(-${current * 100}%)`;
+    counter.textContent = `${current + 1} / ${total}`;
+  }
+
+  function next() { if (current < total - 1) { current++; render(); } }
+  function prev() { if (current > 0) { current--; render(); } }
+
+  document.getElementById('tap-right').addEventListener('click', next);
+  document.getElementById('tap-left').addEventListener('click', prev);
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    if (dx > 50) prev();
+    else if (dx < -50) next();
+  }, {passive: true});
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  render();
+
+  // Lightbox: tap a hotspot to enlarge the sushi/sashimi photos
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const hint = document.getElementById('lightbox-hint');
+
+  document.querySelectorAll('.hotspot').forEach(spot => {
+    spot.addEventListener('click', e => {
+      e.stopPropagation();
+      lightboxImg.src = spot.getAttribute('data-full');
+      lightbox.classList.add('open');
+      hint.style.display = 'block';
+    });
+  });
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    hint.style.display = 'none';
+  }
+  lightbox.addEventListener('click', closeLightbox);
+</script>
+</body>
+</html>
